@@ -12,6 +12,7 @@
 			"email" : "hoducha@gmail.com"
 		}
 	],
+	"minimum-stability": "dev",
 	"require" : {
 		"fabpot/goutte" : "dev-master",
 		"symfony/http-foundation" : "dev-master",
