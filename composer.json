@@ -1,0 +1,30 @@
+{
+	"name" : "dootech/webproxy",
+	"type" : "application",
+	"description" : "An advanced web proxy built with Symfony components, Goutte and Guzzle",
+	"keywords" : [
+		"proxy"
+	],
+	"homepage" : "https://dootech.com",
+	"license" : "MIT",
+	"authors" : [{
+			"name" : "Ha Ho",
+			"email" : "hoducha@gmail.com"
+		}
+	],
+	"require" : {
+		"fabpot/goutte" : "dev-master",
+		"symfony/http-foundation" : "dev-master",
+		"symfony/http-kernel" : "dev-master",
+		"symfony/event-dispatcher" : "dev-master"
+	},
+	"require-dev" : {
+		"phpunit/phpunit" : "4.7.5",
+		"symfony/debug" : "dev-master"
+	},
+	"autoload" : {
+		"psr-4" : {
+			"Dootech\\WebProxy\\" : "src/"
+		}
+	}
+}
