@@ -9,6 +9,8 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Request;
 
 class Proxy {
+    private $client;
+
     private $dispatcher;
     private $request;
     private $response;
@@ -17,21 +19,21 @@ class Proxy {
     private $history;
     private $server;
 
+    private $appendUrl;
+    private $targetUrl;
+
     public function __construct() {
         $this->dispatcher = new EventDispatcher();
         $this->server = array();
     }
 
-    public function test() {
-        return 'test';
-    }
-
     public function forward(Request $request, $targetUrl){
         $this->request = $request;
+        $this->targetUrl = $targetUrl;
 
-//         $this->dispatcher->dispatch('request.before_send', new ProxyEvent(array('request'=>$this->request, 'cookieJar' => $this->cookieJar)));
+//         $this->dispatcher->dispatch('proxy.on_request', new ProxyEvent(array('request'=>$this->request, 'cookieJar' => $this->cookieJar)));
 
-        $client = new Client($this->server, $this->history, $this->cookieJar);
+        $client = $this->getClient();
 
         // Turn off SSL verification
 //         $client->getClient()->setDefaultOption('verify', FALSE);
@@ -40,24 +42,18 @@ class Proxy {
 //         $client->getClient()->setDefaultOption('config/curl/'.CURLOPT_HEADERFUNCTION, array($this, 'fn_CURLOPT_HEADERFUNCTION'));
 //         $client->getClient()->setDefaultOption('config/curl/'.CURLOPT_WRITEFUNCTION, array($this, 'fn_CURLOPT_WRITEFUNCTION'));
 
-        $crawler = $client->request($request->getMethod(), $targetUrl . '/' . $request->getRequestUri(), $_REQUEST, $_FILES, $server=array());
+        $crawler = $client->request($this->request->getMethod(), $this->targetUrl, $_REQUEST, $_FILES, $this->server);
+        $this->dispatcher->dispatch('proxy.on_response', new ProxyEvent(array('crawler'=>$crawler)));
 
         $clientResponse = $client->getResponse();
+        $this->response = new Response();
+        $this->response->setContent($clientResponse->getContent());
+        $this->response->setStatusCode($clientResponse->getStatus());
+        $this->response->headers = new ResponseHeaderBag($clientResponse->getHeaders());
 
+        $this->dispatcher->dispatch('proxy.on_completed', new ProxyEvent(array('proxy'=>$this)));
 
-        // Create new Http Response from BrowserKit Response
-        $response = new Response();
-        $response->setContent($clientResponse->getContent());
-        $response->setStatusCode($clientResponse->getStatus());
-        $response->headers = new ResponseHeaderBag($clientResponse->getHeaders());
-
-//         $this->dispatcher->dispatch('request.complete', new ProxyEvent(array('response'=>$response)));
-
-        return $response;
-    }
-
-    public function getEventDispatcher() {
-        return $this->dispatcher;
+        return $this->response;
     }
 
     /**
@@ -80,6 +76,94 @@ class Proxy {
      */
     private function fn_CURLOPT_WRITEFUNCTION($ch, $str) {
         strlen($str);
+    }
+
+    public function setClient(Client $client)
+    {
+        $this->client = $client;
+
+        return $this;
+    }
+
+    public function getClient()
+    {
+        if (!$this->client) {
+            $this->client = new Client($this->server, $this->history, $this->cookieJar);
+        }
+
+        return $this->client;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getRequest()
+    {
+        return $this->request;
+    }
+
+    /**
+     * @param mixed $request
+     */
+    public function setRequest($request)
+    {
+        $this->request = $request;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getResponse()
+    {
+        return $this->response;
+    }
+
+    /**
+     * @param mixed $response
+     */
+    public function setResponse($response)
+    {
+        $this->response = $response;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getTargetUrl()
+    {
+        return $this->targetUrl;
+    }
+
+    /**
+     * @param mixed $targetUrl
+     */
+    public function setTargetUrl($targetUrl)
+    {
+        $this->targetUrl = $targetUrl;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getAppendUrl()
+    {
+        return $this->appendUrl;
+    }
+
+    /**
+     * @param mixed $appendUrl
+     */
+    public function setAppendUrl($appendUrl)
+    {
+        $this->appendUrl = $appendUrl;
+    }
+
+    /**
+     * @return EventDispatcher
+     */
+    public function getDispatcher()
+    {
+        return $this->dispatcher;
     }
 
 }

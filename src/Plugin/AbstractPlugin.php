@@ -5,40 +5,45 @@ namespace Dootech\WebProxy\Plugin;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Dootech\WebProxy\Event\ProxyEvent;
 
-abstract class AbstractPlugin implements EventSubscriberInterface {
+abstract class AbstractPlugin implements EventSubscriberInterface
+{
 
-	// Apply these methods only to those events whose request URL passes this filter
-	protected $urlPattern;
+    // Apply these methods only to those events whose request URL passes this filter
+    protected $urlPattern;
 
-	public function onBeforeRequest(ProxyEvent $event) {}
+    public function onRequest(ProxyEvent $event)
+    {
+    }
 
-	public function onCompleted(ProxyEvent $event) {}
+    public function onResponse(ProxyEvent $event)
+    {
+    }
 
-	// Dispatch based on filter
-	final public function route(ProxyEvent $event) {
+    public function onCompleted(ProxyEvent $event)
+    {
+    }
 
-		$url = $event['request']->getUri();
-		if ($this->urlPattern && strpos($url, $this->urlPattern) === false) {
-			return;
-		}
+    public function validateUrlPattern(ProxyEvent $event)
+    {
+        $request = isset($event['request']) ? $event['request'] : null;
+        if ($request) {
+            $url = $event['request']->getUri();
+            if (preg_match($this->urlPattern, $url)) {
+                return true;
+            }
+        }
 
-		switch ($event->getName()) {
-			case 'request.before_send':
-                $this->onBeforeRequest($event);
-                break;
+        return false;
+    }
 
-			case 'request.complete':
-				$this->onCompleted($event);
-                break;
-		}
-	}
-
-	final public static function getSubscribedEvents() {
-		return array(
-			'request.before_send' => 'route',
-			'request.complete' => 'route'
-		);
-	}
+    final public static function getSubscribedEvents()
+    {
+        return array(
+            'proxy.on_request' => 'onRequest',
+            'proxy.on_response' => 'onResponse',
+            'proxy.on_completed' => 'onCompleted'
+        );
+    }
 }
 
 ?>
