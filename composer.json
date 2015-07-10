@@ -24,7 +24,8 @@
 	},
 	"autoload" : {
 		"psr-4" : {
-			"Dootech\\WebProxy\\" : "src/"
+			"Dootech\\WebProxy\\" : "src/",
+          "Dootech\\WebProxy\\Test\\" : "tests/"
 		}
 	}
 }

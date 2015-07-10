@@ -2,33 +2,37 @@
 namespace Dootech\WebProxy\Plugin;
 
 use Dootech\WebProxy\Event\ProxyEvent;
+use Dootech\WebProxy\Parser\ContentParser;
 
 class LinkModifierPlugin extends AbstractPlugin
 {
-    const LINK_PATTERN = "/(<a[^>]+href=\"|')(.*?)(\"|'[^>]*>.*?<\/a>)/";
+    const LINK_PATTERN = "/(<a[^>]+href=(\"|'))(.*?)((\"|')[^>]*>.*?<\/a>)/";
 
-    public function onResponse(ProxyEvent $event)
-    {
-        $crawler = isset($event['crawler']) ? $event['crawler'] : null;
-        if ($crawler) {
-            foreach ($crawler->filter('a') as $linkNode) {
-                // $linkNode->getAttribute('href');
-            }
-        }
-    }
-
-    public function onCompleted(ProxyEvent $event)
+    public function onRequestComplete(ProxyEvent $event)
     {
         $proxy = isset($event['proxy']) ? $event['proxy'] : null;
-        $response = $proxy->getResponse();
+        $response = !empty($proxy) ? $proxy->getResponse() : null;
         if ($response) {
             $content = $response->getContent();
             $contentType = $response->headers->get('Content-Type');
-            if (strpos($contentType, 'text/html') !== false || strpos($contentType, 'text/javascript') !== false) {
-                $content = $this->modifyLinks($proxy->getTargetUrl(), $content, $proxy->getAppendUrl());
-                $response->setContent($content);
-                $response->headers->set('Content-Length', strlen($content));
+            $contentParser = new ContentParser($response->getContent(), $proxy->getTargetUrl(), $proxy->getAppendUrl());
+
+            if ($contentType == 'text/html') {
+                $content = $contentParser->parseHTML();
+            } else if ($contentType == 'text/css') {
+                $content = $contentParser->parseCss();
+            } else if ($contentType == 'text/javascript' || $contentType == 'application/javascript' || $contentType == 'application/x-javascript') {
+                $content = $contentParser->parseJS();
+            } else if (substr($contentType,0,6) == 'image/') {
+                // TODO: Create image filter
+            } else if (substr($contentType,0,6) == 'video/' || substr($contentType,0,6) != 'audio/') {
+                // TODO: Create streaming filter for video/audio files
+            } else {
+                // Do not recognize the content type.
             }
+
+            $response->setContent($content);
+            $response->headers->set('Content-Length', strlen($content));
         }
     }
 
@@ -41,14 +45,14 @@ class LinkModifierPlugin extends AbstractPlugin
         $count = count($matches[0]);
 
         for ($i = 0; $i < $count; $i++) {
-            $url = $matches[2][$i];
+            $url = $matches[3][$i];
             if ($this->isRelativeUrl($url)) {
                 $url = $siteBaseUrl . $url;
             }
 
             if ($this->isInternalLink($siteDomain, $url)) {
                 $url = $appendUrl . urlencode($url);
-                $content = str_replace($matches[0][$i], $matches[1][$i] . $url . $matches[3][$i], $content);
+                $content = str_replace($matches[0][$i], $matches[1][$i] . $url . $matches[4][$i], $content);
             }
         }
 

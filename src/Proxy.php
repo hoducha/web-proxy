@@ -31,7 +31,7 @@ class Proxy {
         $this->request = $request;
         $this->targetUrl = $targetUrl;
 
-//         $this->dispatcher->dispatch('proxy.on_request', new ProxyEvent(array('request'=>$this->request, 'cookieJar' => $this->cookieJar)));
+        $this->dispatcher->dispatch('request.before_send', new ProxyEvent(array('proxy'=>$this)));
 
         $client = $this->getClient();
 
@@ -42,16 +42,14 @@ class Proxy {
 //         $client->getClient()->setDefaultOption('config/curl/'.CURLOPT_HEADERFUNCTION, array($this, 'fn_CURLOPT_HEADERFUNCTION'));
 //         $client->getClient()->setDefaultOption('config/curl/'.CURLOPT_WRITEFUNCTION, array($this, 'fn_CURLOPT_WRITEFUNCTION'));
 
-        $crawler = $client->request($this->request->getMethod(), $this->targetUrl, $_REQUEST, $_FILES, $this->server);
-        $this->dispatcher->dispatch('proxy.on_response', new ProxyEvent(array('crawler'=>$crawler)));
-
+        $client->request($this->request->getMethod(), $this->targetUrl, $_REQUEST, $_FILES, $this->server);
         $clientResponse = $client->getResponse();
         $this->response = new Response();
         $this->response->setContent($clientResponse->getContent());
         $this->response->setStatusCode($clientResponse->getStatus());
         $this->response->headers = new ResponseHeaderBag($clientResponse->getHeaders());
 
-        $this->dispatcher->dispatch('proxy.on_completed', new ProxyEvent(array('proxy'=>$this)));
+        $this->dispatcher->dispatch('request.complete', new ProxyEvent(array('proxy'=>$this)));
 
         return $this->response;
     }
@@ -164,6 +162,22 @@ class Proxy {
     public function getDispatcher()
     {
         return $this->dispatcher;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getCookieJar()
+    {
+        return $this->cookieJar;
+    }
+
+    /**
+     * @param mixed $cookieJar
+     */
+    public function setCookieJar($cookieJar)
+    {
+        $this->cookieJar = $cookieJar;
     }
 
 }

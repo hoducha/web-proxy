@@ -6,23 +6,23 @@ use Dootech\WebProxy\Proxy;
 use Symfony\Component\HttpFoundation\Request;
 
 
-$request = Request::createFromGlobals();
-$targetUrl = $request->get('_proxyTargetUrl');
 
-//if(!empty($_POST)) {
-//    var_dump($request); die;
-//}
+$request = Request::createFromGlobals();
+//$request = Request::create('/', 'GET', array('_proxyTargetUrl' => 'http://vnexpress.net'));
+$targetUrl = $request->get('_proxyTargetUrl');
 
 if ($targetUrl) {
     $proxy = new Proxy();
     $proxy->setAppendUrl($request->getBasePath() . '?_proxyTargetUrl=');
-    $proxy->getDispatcher()->addSubscriber(new \Dootech\WebProxy\Plugin\LinkModifierPlugin());
+//    $proxy->getDispatcher()->addSubscriber(new \Dootech\WebProxy\Plugin\LinkModifierPlugin());
+    $proxy->getDispatcher()->addSubscriber(new \Dootech\WebProxy\Plugin\LinkModifierUsingCrawlerPlugin());
+    $proxy->getDispatcher()->addSubscriber(new \Dootech\WebProxy\Plugin\CookiePlugin());
 
     $response = $proxy->forward($request, $targetUrl);
     $response->send();
 
 } else {
-    $content = <<<HTML
+    echo <<<HTML
 <!DOCTYPE html>
 <html lang="en">
 <body>
@@ -35,8 +35,5 @@ if ($targetUrl) {
 </body>
 </html>
 HTML;
-    echo $content;
 }
-
-
 
