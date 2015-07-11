@@ -1,6 +1,7 @@
 <?php
 namespace Dootech\WebProxy\Test;
 
+use Dootech\WebProxy\Plugin\LinkModifierPlugin;
 use Dootech\WebProxy\Proxy;
 use Goutte\Client;
 use GuzzleHttp\Client as GuzzleClient;
