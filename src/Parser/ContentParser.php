@@ -20,7 +20,10 @@ class ContentParser
     private $content;
     private $urlParser;
     private $urlPrefix;
-    private $output;
+
+    // TODO: Verify it works
+    private $enableJavascriptParsing = false;
+    private $enableInjectedAjaxFix = false;
 
     public function __construct($content, $url, $urlPrefix)
     {
@@ -50,7 +53,7 @@ class ContentParser
         }
         $code = preg_replace_callback('~<([^!].*)>~iUs', Array('self', '__cb_htmlTag'), $code);
 
-        if (defined("ENABLE_INJECTED_AJAXFIX") && ENABLE_INJECTED_AJAXFIX == "true") {
+        if ($this->enableInjectedAjaxFix) {
             $code = preg_replace("~<\s*head\s*>~iUs", '<head><script type="text/javascript" language="javascript" src="js/ajaxfix.js"></script>', $code);
         }
 
@@ -86,7 +89,7 @@ class ContentParser
      */
     protected function jsParse($js)
     {
-        if(defined("ENABLE_JS_PARSING") && ENABLE_JS_PARSING == "false")
+        if($this->enableJavascriptParsing == false)
             return $js;
 
         //Remove the comments
@@ -98,7 +101,6 @@ class ContentParser
         $regex = false;
         $comment = false;
         $slcmt = false;
-        $lastStringIterator = '';
         while ($ptr < $len) {
             if (!$comment && $js[$ptr] == "\\") {
                 $ptr += 2;
@@ -289,6 +291,38 @@ class ContentParser
         $tagInner = preg_replace('~#knproxy_script_lt#~iUs', '<', $matches[2]);
         $tagInner = $this->jsParse($tagInner);
         return '<script' . $matches[1] . '>' . $tagInner . '</script>';
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isEnableInjectedAjaxFix()
+    {
+        return $this->enableInjectedAjaxFix;
+    }
+
+    /**
+     * @param boolean $enableInjectedAjaxFix
+     */
+    public function setEnableInjectedAjaxFix($enableInjectedAjaxFix)
+    {
+        $this->enableInjectedAjaxFix = $enableInjectedAjaxFix;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isEnableJavascriptParsing()
+    {
+        return $this->enableJavascriptParsing;
+    }
+
+    /**
+     * @param boolean $enableJavascriptParsing
+     */
+    public function setEnableJavascriptParsing($enableJavascriptParsing)
+    {
+        $this->enableJavascriptParsing = $enableJavascriptParsing;
     }
 
 }

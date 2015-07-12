@@ -11,9 +11,9 @@ class LinkModifierPlugin extends AbstractPlugin
         $proxy = isset($event['proxy']) ? $event['proxy'] : null;
         $response = !empty($proxy) ? $proxy->getResponse() : null;
         if ($response) {
-            $content = $response->getContent();
             $contentType = $response->headers->get('Content-Type');
             $contentParser = new ContentParser($response->getContent(), $proxy->getTargetUrl(), $proxy->getAppendUrl());
+            $content = null;
 
             if (strpos($contentType, 'text/html') !== FALSE) {
                 $content = $contentParser->parseHTML();
@@ -34,8 +34,10 @@ class LinkModifierPlugin extends AbstractPlugin
                 // Do not recognize the content type.
             }
 
-            $response->setContent($content);
-            $response->headers->set('Content-Length', strlen($content));
+            if ($content) {
+                $response->setContent($content);
+                $response->headers->set('Content-Length', strlen($content));
+            }
         }
     }
 }

@@ -17,19 +17,20 @@ class Proxy {
 
     private $cookieJar;
     private $history;
-    private $server;
+    private $browserCookies;
+    private $server = array();
 
     private $appendUrl;
     private $targetUrl;
 
     public function __construct() {
         $this->dispatcher = new EventDispatcher();
-        $this->server = array();
     }
 
     public function forward(Request $request, $targetUrl){
         $this->request = $request;
         $this->targetUrl = $targetUrl;
+        $this->browserCookies = ($this->browserCookies) ? array_merge($this->browserCookies, $_COOKIE) : $_COOKIE;
 
         $this->dispatcher->dispatch('request.before_send', new ProxyEvent(array('proxy'=>$this)));
 
@@ -178,6 +179,22 @@ class Proxy {
     public function setCookieJar($cookieJar)
     {
         $this->cookieJar = $cookieJar;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getBrowserCookies()
+    {
+        return $this->browserCookies;
+    }
+
+    /**
+     * @param mixed $browserCookies
+     */
+    public function setBrowserCookies($browserCookies)
+    {
+        $this->browserCookies = $browserCookies;
     }
 
 }
