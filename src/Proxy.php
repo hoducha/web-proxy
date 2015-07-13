@@ -3,12 +3,14 @@ namespace Dootech\WebProxy;
 
 use Dootech\WebProxy\Event\ProxyEvent;
 use Goutte\Client;
+use GuzzleHttp\Client as GuzzleClient;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Request;
 
-class Proxy {
+class Proxy
+{
     private $client;
 
     private $dispatcher;
@@ -23,34 +25,31 @@ class Proxy {
     private $appendUrl;
     private $targetUrl;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->dispatcher = new EventDispatcher();
     }
 
-    public function forward(Request $request, $targetUrl){
+    public function forward(Request $request, $targetUrl)
+    {
         $this->request = $request;
         $this->targetUrl = $targetUrl;
         $this->browserCookies = ($this->browserCookies) ? array_merge($this->browserCookies, $_COOKIE) : $_COOKIE;
 
-        $this->dispatcher->dispatch('request.before_send', new ProxyEvent(array('proxy'=>$this)));
-
-        $client = $this->getClient();
-
-        // Turn off SSL verification
-//         $client->getClient()->setDefaultOption('verify', FALSE);
+        $this->dispatcher->dispatch('request.before_send', new ProxyEvent(array('proxy' => $this)));
 
 //         // Set callback options to cURL request
 //         $client->getClient()->setDefaultOption('config/curl/'.CURLOPT_HEADERFUNCTION, array($this, 'fn_CURLOPT_HEADERFUNCTION'));
 //         $client->getClient()->setDefaultOption('config/curl/'.CURLOPT_WRITEFUNCTION, array($this, 'fn_CURLOPT_WRITEFUNCTION'));
 
-        $client->request($this->request->getMethod(), $this->targetUrl, $_REQUEST, $_FILES, $this->server);
-        $clientResponse = $client->getResponse();
+        $this->getClient()->request($this->request->getMethod(), $this->targetUrl, $_REQUEST, $_FILES, $this->server);
+        $clientResponse = $this->getClient()->getResponse();
         $this->response = new Response();
         $this->response->setContent($clientResponse->getContent());
         $this->response->setStatusCode($clientResponse->getStatus());
         $this->response->headers = new ResponseHeaderBag($clientResponse->getHeaders());
 
-        $this->dispatcher->dispatch('request.complete', new ProxyEvent(array('proxy'=>$this)));
+        $this->dispatcher->dispatch('request.complete', new ProxyEvent(array('proxy' => $this)));
 
         return $this->response;
     }
@@ -58,22 +57,24 @@ class Proxy {
     /**
      * Callback function handling header lines received in the response
      *
-     * @param resource $ch  The cURL resource
-     * @param string $str   A string with the header data to be written
+     * @param resource $ch The cURL resource
+     * @param string $str A string with the header data to be written
      * @return number       The number of bytes written
      */
-    private function fn_CURLOPT_HEADERFUNCTION($ch, $str) {
+    private function fn_CURLOPT_HEADERFUNCTION($ch, $str)
+    {
         return strlen($str);
     }
 
     /**
      * Callback function handling data received from the response
      *
-     * @param resource $ch  The cURL resource
-     * @param string $str   A string with the data to be written
+     * @param resource $ch The cURL resource
+     * @param string $str A string with the data to be written
      * @return number       The number of bytes written
      */
-    private function fn_CURLOPT_WRITEFUNCTION($ch, $str) {
+    private function fn_CURLOPT_WRITEFUNCTION($ch, $str)
+    {
         strlen($str);
     }
 
@@ -88,6 +89,9 @@ class Proxy {
     {
         if (!$this->client) {
             $this->client = new Client($this->server, $this->history, $this->cookieJar);
+            $this->client->setClient(new GuzzleClient(array(
+                'cookies' => true, 'verify' => false
+            )));
         }
 
         return $this->client;

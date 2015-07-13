@@ -11,7 +11,6 @@ $targetUrl = $request->get('_proxyTargetUrl');
 
 if ($targetUrl) {
     // Get base url
-    $host = $_SERVER['HTTP_HOST'];
     if (strtolower(substr($_SERVER['HTTP_HOST'], 0, 4)) != 'http' && (!isset($_SERVER['HTTPS']) || $_SERVER['HTTPS'] == '')) {
         $host = 'http://' . $_SERVER['HTTP_HOST'];
     } else {
