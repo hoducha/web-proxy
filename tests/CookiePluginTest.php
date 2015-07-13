@@ -12,36 +12,30 @@ namespace Dootech\WebProxy\Test;
 use Dootech\WebProxy\Plugin\CookiePlugin;
 use Dootech\WebProxy\Proxy;
 use GuzzleHttp\Cookie\SetCookie;
+use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request;
 use GuzzleHttp\Psr7\Response as GuzzleResponse;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 
 class CookiePluginTest extends AbstractTestCase
 {
     public function testSaveCookies()
     {
-        $cookie = new SetCookie(array(
-            'Name' => 'name1',
-            'Value' => 'value1',
-            'Domain' => 'example.com'
-        ));
+        $expires = time() + 3600;
+
+        $cookies = array(
+            new Cookie('name1', 'value1', $expires, '/', 'example.com'),
+            new Cookie('name2', 'value2', $expires, '/path', 'example.com')
+        );
 
         $expectedResult = array(
-            CookiePlugin::COOKIE_TARGET_DOMAIN => new SetCookie(array(
-                'Name' => CookiePlugin::COOKIE_TARGET_DOMAIN,
-                'Value' => 'example.com',
-                'Domain' => 'proxy.local'
-            )),
-            CookiePlugin::COOKIE_PREFIX . 'name1' => new SetCookie(array(
-                'Name' => CookiePlugin::COOKIE_PREFIX . 'name1',
-                'Value' => 'value1',
-                'Domain' => 'proxy.local'
-            )),
+            CookiePlugin::COOKIE_PREFIX . 'name1' => new Cookie(CookiePlugin::COOKIE_PREFIX . 'name1', 'value1', $expires, '/', 'proxy.local'),
+            CookiePlugin::COOKIE_PREFIX . 'name2' => new Cookie(CookiePlugin::COOKIE_PREFIX . 'name2', 'value2', $expires, '/path', 'proxy.local'),
+            CookiePlugin::COOKIE_TARGET_DOMAIN => new Cookie(CookiePlugin::COOKIE_TARGET_DOMAIN, 'example.com', $expires, '/', 'proxy.local'),
         );
 
         $guzzle = $this->getGuzzle([
-            new GuzzleResponse(
-                200,
-                array('Set-Cookie'=> (string) $cookie)
+            new GuzzleResponse(200, array('Set-Cookie' => $cookies)
             ),
         ]);
 
@@ -52,11 +46,11 @@ class CookiePluginTest extends AbstractTestCase
 
         $request = Request::create('/', 'GET');
         $response = $proxy->forward($request, 'http://example.com');
-        $responseCookies = $response->headers->get('set-cookie', null, false);
+        $responseCookies = $response->headers->getCookies();
 
-        foreach ($responseCookies as $cookieString) {
-            $cookie = SetCookie::fromString($cookieString);
+        $this->assertEquals(count($expectedResult), count($responseCookies));
 
+        foreach ($responseCookies as $cookie) {
             // The cookie has to be in the expected result
             $this->assertArrayHasKey($cookie->getName(), $expectedResult);
 

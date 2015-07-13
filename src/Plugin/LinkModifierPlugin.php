@@ -13,6 +13,8 @@ class LinkModifierPlugin extends AbstractPlugin
         if ($response) {
             $contentType = $response->headers->get('Content-Type');
             $contentParser = new ContentParser($response->getContent(), $proxy->getTargetUrl(), $proxy->getAppendUrl());
+            $contentParser->setEnableJavascriptParsing(true);
+            $contentParser->setEnableInjectedAjaxFix(true);
             $content = null;
 
             if (strpos($contentType, 'text/html') !== FALSE) {

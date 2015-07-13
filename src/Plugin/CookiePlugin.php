@@ -40,9 +40,6 @@ class CookiePlugin extends AbstractPlugin
                         }
                     }
                 }
-                //     $cookieJar->setCookie(new SetCookie(array("Name"=>$name, "Value"=>$value, "Domain"=>$targetDomain, 'Path'=>'/' . $request->getRequestUri())));
-                //     $cookie = new Cookie($cookieJar);
-                //     $client->getClient()->getEmitter()->attach($cookie);
             }
         }
     }
@@ -54,22 +51,20 @@ class CookiePlugin extends AbstractPlugin
         if ($proxy) {
             $proxyDomain = parse_url($proxy->getAppendUrl(), PHP_URL_HOST);
             $targetDomain = parse_url($proxy->getTargetUrl(), PHP_URL_HOST);
-            $targetRootDomain = implode('.', array_slice(explode('.', $targetDomain), -2, 2));
 
             $response = $proxy->getResponse();
             $responseCookies = $response->headers->get('set-cookie', null, false);
 
             foreach ($responseCookies as $key => $value) {
                 $c = SetCookie::fromString($value);
-                if ($c->matchesDomain($targetDomain) || $c->matchesDomain($targetRootDomain)) {
-                    $c->setDomain($proxyDomain);
-                    $c->setName(self::COOKIE_PREFIX . $c->getName());
-                    $responseCookies[$key] = (string)$c;
-                }
+                $expires = $c->getExpires() ? $c->getExpires() : 0;
+                $response->headers->setCookie(
+                    new HttpCookie(self::COOKIE_PREFIX . $c->getName(), $c->getValue(), $expires,
+                        '/', $proxyDomain, $c->getSecure(), $c->getHttpOnly())
+                );
             }
 
-            $response->headers->set('set-cookie', $responseCookies);
-            $response->headers->setCookie(new HttpCookie(self::COOKIE_TARGET_DOMAIN, $targetDomain, time() + (3600 * 24)));
+            $response->headers->setCookie(new HttpCookie(self::COOKIE_TARGET_DOMAIN, $targetDomain, time() + (3600 * 24), '/', $proxyDomain));
         }
     }
 }
