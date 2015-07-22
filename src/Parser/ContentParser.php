@@ -20,6 +20,7 @@ class ContentParser
     private $content;
     private $urlParser;
     private $urlPrefix;
+    private $baseHref;
 
     // TODO: Verify it works
     private $enableJavascriptParsing = false;
@@ -54,7 +55,17 @@ class ContentParser
         $code = preg_replace_callback('~<([^!].*)>~iUs', Array('self', '__cb_htmlTag'), $code);
 
         if ($this->enableInjectedAjaxFix) {
-            $code = preg_replace("~<\s*head\s*>~iUs", '<head><script type="text/javascript" language="javascript" src="js/ajaxfix.js"></script>', $code);
+            $ajaxfix = <<<HTML
+<script type="text/javascript" language="javascript">
+    var oldOpen= XMLHttpRequest.prototype.open;
+    XMLHttpRequest.prototype.open = function(method, url, async, username, password){
+        console.log(url);
+        oldOpen.call(this, method, url, async, username, password);
+    }
+</script>
+HTML;
+
+            $code = preg_replace("~<\s*head\s*>~iUs", '<head>' . $ajaxfix, $code);
         }
 
         $code = preg_replace_callback('~(<\s*style[^>]*>)(.*)<\s*/style\s*>~iUs', Array('self', '__cb_cssTag'), $code);
@@ -76,7 +87,12 @@ class ContentParser
             return 'javascript:' . $this->jsParse(substr($urlField, 10, strlen($urlField)));
         }
 
-        $urlBase = $this->urlParser->getAbsolute($urlField);
+        $parsedUrl = $this->urlParser->parseUrl($urlField);
+        if ($this->baseHref && $parsedUrl['SCHEME'] == ':relative') {
+            $urlBase = $this->baseHref . $urlField;
+        } else {
+            $urlBase = $this->urlParser->getAbsolute($urlField);
+        }
 
         return $this->urlPrefix .urlencode($urlBase);
     }
@@ -323,6 +339,22 @@ class ContentParser
     public function setEnableJavascriptParsing($enableJavascriptParsing)
     {
         $this->enableJavascriptParsing = $enableJavascriptParsing;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getBaseHref()
+    {
+        return $this->baseHref;
+    }
+
+    /**
+     * @param mixed $baseHref
+     */
+    public function setBaseHref($baseHref)
+    {
+        $this->baseHref = $baseHref;
     }
 
 }

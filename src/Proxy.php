@@ -89,6 +89,7 @@ class Proxy
     {
         if (!$this->client) {
             $this->client = new Client($this->server, $this->history, $this->cookieJar);
+            $this->client->setServerParameter('HTTP_USER_AGENT', $_SERVER['HTTP_USER_AGENT']);
             $this->client->setClient(new GuzzleClient(array(
                 'cookies' => true, 'verify' => false
             )));

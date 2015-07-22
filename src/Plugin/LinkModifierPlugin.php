@@ -3,6 +3,7 @@ namespace Dootech\WebProxy\Plugin;
 
 use Dootech\WebProxy\Event\ProxyEvent;
 use Dootech\WebProxy\Parser\ContentParser;
+use Symfony\Component\DomCrawler\Crawler;
 
 class LinkModifierPlugin extends AbstractPlugin
 {
@@ -18,6 +19,7 @@ class LinkModifierPlugin extends AbstractPlugin
             $content = null;
 
             if (strpos($contentType, 'text/html') !== FALSE) {
+                $contentParser->setBaseHref($this->getBaseHref($response->getContent()));
                 $content = $contentParser->parseHTML();
 
             } else if (strpos($contentType, 'text/css') !== FALSE) {
@@ -40,6 +42,23 @@ class LinkModifierPlugin extends AbstractPlugin
                 $response->setContent($content);
                 $response->headers->set('Content-Length', strlen($content));
             }
+        }
+    }
+
+    /**
+     * Get base url from <base> tag
+     *
+     * @param $html
+     * @return null|string
+     */
+    private function getBaseHref($html)
+    {
+        $crawler = new Crawler($html);
+        $baseNode = $crawler->filterXPath('//base')->getNode(0);
+        if ($baseNode) {
+            return $baseNode->getAttribute('href');
+        } else {
+            return null;
         }
     }
 }
