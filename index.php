@@ -22,6 +22,7 @@ if ($targetUrl) {
     $proxy->setAppendUrl($appendUrl);
     $proxy->getDispatcher()->addSubscriber(new \Dootech\WebProxy\Plugin\LinkModifierPlugin());
     $proxy->getDispatcher()->addSubscriber(new \Dootech\WebProxy\Plugin\CookiePlugin());
+    $proxy->getDispatcher()->addSubscriber(new \Dootech\WebProxy\Plugin\RedirectPlugin(array('image', 'video', 'audio')));
 
     $response = $proxy->forward($request, $targetUrl);
     $response->send();

@@ -1,11 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Ha
- * Date: 7/10/2015
- * Time: 4:32 PM
- */
-
 namespace Dootech\WebProxy\Parser;
 
 /**
@@ -55,15 +48,13 @@ class ContentParser
         $code = preg_replace_callback('~<([^!].*)>~iUs', Array('self', '__cb_htmlTag'), $code);
 
         if ($this->enableInjectedAjaxFix) {
-            $ajaxfix = <<<HTML
-<script type="text/javascript" language="javascript">
-    var oldOpen= XMLHttpRequest.prototype.open;
-    XMLHttpRequest.prototype.open = function(method, url, async, username, password){
-        console.log(url);
-        oldOpen.call(this, method, url, async, username, password);
-    }
-</script>
-HTML;
+            $ajaxfix = '<script type="text/javascript" language="javascript">
+                            var oldOpen= XMLHttpRequest.prototype.open;
+                            XMLHttpRequest.prototype.open = function(method, url, async, username, password){
+                                console.log(url);
+                                oldOpen.call(this, method, url, async, username, password);
+                            }
+                        </script>';
 
             $code = preg_replace("~<\s*head\s*>~iUs", '<head>' . $ajaxfix, $code);
         }

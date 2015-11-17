@@ -15,7 +15,7 @@ class LinkModifierPlugin extends AbstractPlugin
             $contentType = $response->headers->get('Content-Type');
             $contentParser = new ContentParser($response->getContent(), $proxy->getTargetUrl(), $proxy->getAppendUrl());
             $contentParser->setEnableJavascriptParsing(true);
-            $contentParser->setEnableInjectedAjaxFix(true);
+            $contentParser->setEnableInjectedAjaxFix(false);
             $content = null;
 
             if (strpos($contentType, 'text/html') !== FALSE) {
@@ -29,13 +29,6 @@ class LinkModifierPlugin extends AbstractPlugin
                 || strpos($contentType, 'application/javascript') !== FALSE
                 || strpos($contentType, 'application/x-javascript') !== FALSE) {
                     $content = $contentParser->parseJS();
-
-            } else if (substr($contentType,0,6) == 'image/') {
-                // TODO: Create image filter
-            } else if (substr($contentType,0,6) == 'video/' || substr($contentType,0,6) != 'audio/') {
-                // TODO: Create streaming filter for video/audio files
-            } else {
-                // Do not recognize the content type.
             }
 
             if ($content) {

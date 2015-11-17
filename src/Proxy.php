@@ -16,6 +16,7 @@ class Proxy
     private $dispatcher;
     private $request;
     private $response;
+    private $redirect = false;
 
     private $cookieJar;
     private $history;
@@ -38,20 +39,33 @@ class Proxy
 
         $this->dispatcher->dispatch('request.before_send', new ProxyEvent(array('proxy' => $this)));
 
-//         // Set callback options to cURL request
-//         $client->getClient()->setDefaultOption('config/curl/'.CURLOPT_HEADERFUNCTION, array($this, 'fn_CURLOPT_HEADERFUNCTION'));
-//         $client->getClient()->setDefaultOption('config/curl/'.CURLOPT_WRITEFUNCTION, array($this, 'fn_CURLOPT_WRITEFUNCTION'));
+        if ($this->redirect) {
+            $this->redirect($this->targetUrl, true);
 
-        $this->getClient()->request($this->request->getMethod(), $this->targetUrl, $_REQUEST, $_FILES, $this->server);
-        $clientResponse = $this->getClient()->getResponse();
-        $this->response = new Response();
-        $this->response->setContent($clientResponse->getContent());
-        $this->response->setStatusCode($clientResponse->getStatus());
-        $this->response->headers = new ResponseHeaderBag($clientResponse->getHeaders());
+        } else {
+            // Set callback options to cURL request
+            // $client->getClient()->setDefaultOption('config/curl/'.CURLOPT_HEADERFUNCTION, array($this, 'fn_CURLOPT_HEADERFUNCTION'));
+            // $client->getClient()->setDefaultOption('config/curl/'.CURLOPT_WRITEFUNCTION, array($this, 'fn_CURLOPT_WRITEFUNCTION'));
 
-        $this->dispatcher->dispatch('request.complete', new ProxyEvent(array('proxy' => $this)));
+            $this->getClient()->request($this->request->getMethod(), $this->targetUrl, $_REQUEST, $_FILES, $this->server);
+            $clientResponse = $this->getClient()->getResponse();
 
-        return $this->response;
+            $this->response = new Response();
+            $this->response->setContent($clientResponse->getContent());
+            $this->response->setStatusCode($clientResponse->getStatus());
+            $this->response->headers = new ResponseHeaderBag($clientResponse->getHeaders());
+
+            $this->dispatcher->dispatch('request.complete', new ProxyEvent(array('proxy' => $this)));
+
+            return $this->response;
+        }
+
+    }
+
+    private function redirect($url, $permanent = false)
+    {
+        header('Location: ' . $url, true, $permanent ? 301 : 302);
+        exit();
     }
 
     /**
@@ -202,4 +216,19 @@ class Proxy
         $this->browserCookies = $browserCookies;
     }
 
+    /**
+     * @return boolean
+     */
+    public function isRedirect()
+    {
+        return $this->redirect;
+    }
+
+    /**
+     * @param boolean $redirect
+     */
+    public function setRedirect($redirect)
+    {
+        $this->redirect = $redirect;
+    }
 }

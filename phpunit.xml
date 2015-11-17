@@ -8,6 +8,7 @@
 >
     <php>
         <ini name="error_reporting" value="-1" />
+        <server name="HTTP_USER_AGENT" value="WebProxy User Agent" />
     </php>
 
     <testsuites>
