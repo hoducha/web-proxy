@@ -5,9 +5,9 @@ require 'vendor/autoload.php';
 use Dootech\WebProxy\Proxy;
 use Symfony\Component\HttpFoundation\Request;
 
-
 $request = Request::createFromGlobals();
 $targetUrl = $request->get('_proxyTargetUrl');
+$targetUrl = urldecode($targetUrl);
 
 if ($targetUrl) {
     // Get base url
@@ -21,7 +21,6 @@ if ($targetUrl) {
     $proxy = new Proxy();
     $proxy->setAppendUrl($appendUrl);
     $proxy->getDispatcher()->addSubscriber(new \Dootech\WebProxy\Plugin\LinkModifierPlugin());
-    $proxy->getDispatcher()->addSubscriber(new \Dootech\WebProxy\Plugin\CookiePlugin());
     $proxy->getDispatcher()->addSubscriber(new \Dootech\WebProxy\Plugin\RedirectPlugin(array('image', 'video', 'audio')));
 
     $response = $proxy->forward($request, $targetUrl);

@@ -11,11 +11,9 @@ namespace Dootech\WebProxy\Test;
 
 use Dootech\WebProxy\Plugin\CookiePlugin;
 use Dootech\WebProxy\Proxy;
-use GuzzleHttp\Cookie\SetCookie;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request;
 use GuzzleHttp\Psr7\Response as GuzzleResponse;
-use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 
 class CookiePluginTest extends AbstractTestCase
 {
@@ -31,12 +29,10 @@ class CookiePluginTest extends AbstractTestCase
         $expectedResult = array(
             CookiePlugin::COOKIE_PREFIX . 'name1' => new Cookie(CookiePlugin::COOKIE_PREFIX . 'name1', 'value1', $expires, '/', 'proxy.local'),
             CookiePlugin::COOKIE_PREFIX . 'name2' => new Cookie(CookiePlugin::COOKIE_PREFIX . 'name2', 'value2', $expires, '/path', 'proxy.local'),
-            CookiePlugin::COOKIE_TARGET_DOMAIN => new Cookie(CookiePlugin::COOKIE_TARGET_DOMAIN, 'example.com', $expires, '/', 'proxy.local'),
         );
 
         $guzzle = $this->getGuzzle([
-            new GuzzleResponse(200, array('Set-Cookie' => $cookies)
-            ),
+            new GuzzleResponse(200, array('Set-Cookie' => $cookies)),
         ]);
 
         $proxy = new Proxy();
@@ -64,10 +60,6 @@ class CookiePluginTest extends AbstractTestCase
 
     public function testSendCookies()
     {
-        $browserCookies = array(
-            CookiePlugin::COOKIE_TARGET_DOMAIN => 'example.com',
-            CookiePlugin::COOKIE_PREFIX . 'name1' => 'value1'
-        );
         $guzzle = $this->getGuzzle([
             new GuzzleResponse(200, array(), ''),
         ]);
@@ -75,13 +67,17 @@ class CookiePluginTest extends AbstractTestCase
         $proxy = new Proxy();
         $proxy->getClient()->setClient($guzzle);
         $proxy->setAppendUrl('http://proxy.local?u=');
-        $proxy->setBrowserCookies($browserCookies);
-        $proxy->getDispatcher()->addSubscriber(new CookiePlugin());
+
+        $cookiePlugin = new CookiePlugin();
+        $cookiePlugin->addCookie(CookiePlugin::COOKIE_PREFIX . 'name1', 'value1');
+        $cookiePlugin->addCookie(CookiePlugin::COOKIE_PREFIX . 'name2', 'value2');
+
+        $proxy->getDispatcher()->addSubscriber($cookiePlugin);
 
         $request = Request::create('/', 'GET');
         $proxy->forward($request, 'http://example.com');
 
-        $this->assertNotEmpty($cookieJar = $proxy->getCookieJar());
+        $this->assertNotEmpty($cookieJar = $proxy->getClient()->getCookieJar());
         if ($cookieJar) {
             $this->assertNotEmpty($cookie = $cookieJar->get('name1', '/', 'example.com'));
             if ($cookie) {

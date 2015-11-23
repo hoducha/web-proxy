@@ -3,6 +3,9 @@ namespace Dootech\WebProxy\Plugin;
 
 use Dootech\WebProxy\Event\ProxyEvent;
 
+/**
+ * RedirectPlugin is used to redirect all requests for assets (image, video, audio) to the original urls.
+ */
 class RedirectPlugin extends AbstractPlugin
 {
     private $redirectingContentTypes = array();
@@ -29,14 +32,11 @@ class RedirectPlugin extends AbstractPlugin
 
         if ($proxy) {
             try {
-//                $headers = get_headers($proxy->getTargetUrl(), 1);
-//                $contentType = isset($headers['Content-Type']) ? $headers['Content-Type'] : null;
-
                 $response = $proxy->getClient()->getClient()->head($proxy->getTargetUrl(), ['timeout' => 2]);
                 $headerContentTypes = $response->getHeader('Content-Type');
                 $contentType = array_shift($headerContentTypes);
 
-                if ($contentType) {
+                if (is_string($contentType)) {
                     if (   in_array($contentType, $this->redirectingContentTypes)
                         || ($this->redirectImage && preg_match('/^image/', $contentType))
                         || ($this->redirectVideo && preg_match('/^video/', $contentType))

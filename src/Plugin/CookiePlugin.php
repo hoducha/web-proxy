@@ -1,43 +1,41 @@
 <?php
 namespace Dootech\WebProxy\Plugin;
 
-use Dootech\WebProxy\Plugin\AbstractPlugin;
 use Dootech\WebProxy\Event\ProxyEvent;
-use Dootech\WebProxy\Proxy;
+use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
 use Symfony\Component\BrowserKit\Cookie;
-use Symfony\Component\BrowserKit\CookieJar;
 use Symfony\Component\HttpFoundation\Cookie as HttpCookie;
 
+/**
+ * CookiePlugin is used to persist cookies to browsers
+ */
 class CookiePlugin extends AbstractPlugin
 {
     const COOKIE_PREFIX = '__target_';
-    const COOKIE_TARGET_DOMAIN = '__targetDomain';
+
+    private $browserCookies = array();
+
+    public function __construct()
+    {
+        $proxy = isset($event['proxy']) ? $event['proxy'] : null;
+        if ($proxy) {
+            // Do not persist the cookies on the server side if the CookiePlugin is enabled
+            $proxy->getClient()->setGuzzleCookieJar(new CookieJar());
+        }
+    }
 
     public function onBeforeSend(ProxyEvent $event)
     {
         $proxy = isset($event['proxy']) ? $event['proxy'] : null;
-
         if ($proxy) {
-            $browserCookies = $proxy->getBrowserCookies();
-            if ($browserCookies) {
+            $this->browserCookies = array_merge($this->browserCookies, $_COOKIE);
+            if ($this->browserCookies) {
                 $targetDomain = parse_url($proxy->getTargetUrl(), PHP_URL_HOST);
 
-                if (isset($browserCookies[self::COOKIE_TARGET_DOMAIN]) && $browserCookies[self::COOKIE_TARGET_DOMAIN] == $targetDomain) {
-                    $cookieJar = new CookieJar();
-                    foreach ($browserCookies as $name => $value) {
-                        if (preg_match('/^'.self::COOKIE_PREFIX.'(.+)$/', $name, $matches)) {
-                            $cookieJar->set(new Cookie($matches[1], $value, $expires = null, $path = null, $domain = $targetDomain));
-                        }
-                    }
-                    $proxy->setCookieJar($cookieJar);
-                } else {
-                    // Unset cookies if target domain is changed
-                    foreach ($browserCookies as $name => $value) {
-                        if (preg_match('/^'.self::COOKIE_PREFIX.'/', $name)) {
-                            setcookie($name, '', time() - 1000);
-                            setcookie($name, '', time() - 1000, '/');
-                        }
+                foreach ($this->browserCookies as $name => $value) {
+                    if (preg_match('/^'.self::COOKIE_PREFIX.'(.+)$/', $name, $matches)) {
+                        $proxy->getClient()->getCookieJar()->set(new Cookie($matches[1], $value, null, null, $targetDomain));
                     }
                 }
             }
@@ -50,21 +48,24 @@ class CookiePlugin extends AbstractPlugin
 
         if ($proxy) {
             $proxyDomain = parse_url($proxy->getAppendUrl(), PHP_URL_HOST);
-            $targetDomain = parse_url($proxy->getTargetUrl(), PHP_URL_HOST);
-
             $response = $proxy->getResponse();
             $responseCookies = $response->headers->get('set-cookie', null, false);
 
             foreach ($responseCookies as $key => $value) {
-                $c = SetCookie::fromString($value);
+                $c = SetCookie::fromString(urldecode($value));
                 $expires = $c->getExpires() ? $c->getExpires() : 0;
                 $response->headers->setCookie(
                     new HttpCookie(self::COOKIE_PREFIX . $c->getName(), $c->getValue(), $expires,
                         '/', $proxyDomain, $c->getSecure(), $c->getHttpOnly())
                 );
             }
-
-            $response->headers->setCookie(new HttpCookie(self::COOKIE_TARGET_DOMAIN, $targetDomain, time() + (3600 * 24), '/', $proxyDomain));
         }
     }
+
+    public function addCookie($name, $value)
+    {
+        $this->browserCookies[$name] = $value;
+    }
+
+
 }

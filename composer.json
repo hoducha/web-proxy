@@ -12,20 +12,28 @@
 			"email" : "hoducha@gmail.com"
 		}
 	],
+    "repositories": [
+      {
+        "type": "vcs",
+        "url": "https://github.com/hoducha/Goutte"
+      }
+    ],
 	"require" : {
-		"fabpot/goutte" : ">=3.1.0",
+		"fabpot/goutte" : "dev-master",
 		"symfony/http-foundation" : ">=2.7.1",
 		"symfony/http-kernel" : ">=2.7.1",
-		"symfony/event-dispatcher" : ">=2.7.1"
+		"symfony/event-dispatcher" : ">=2.7.1",
+        "guzzlehttp/guzzle": "6.1.0"
 	},
 	"require-dev" : {
 		"phpunit/phpunit" : "4.7.5",
-		"symfony/debug" : ">=2.7.1"
+		"symfony/debug" : ">=2.7.1",
+        "psy/psysh": "@stable"
 	},
 	"autoload" : {
 		"psr-4" : {
 			"Dootech\\WebProxy\\" : "src/",
-          "Dootech\\WebProxy\\Test\\" : "tests/"
+            "Dootech\\WebProxy\\Test\\" : "tests/"
 		}
 	}
 }

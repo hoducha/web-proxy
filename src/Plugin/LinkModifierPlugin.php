@@ -5,6 +5,9 @@ use Dootech\WebProxy\Event\ProxyEvent;
 use Dootech\WebProxy\Parser\ContentParser;
 use Symfony\Component\DomCrawler\Crawler;
 
+/**
+ * LinkModifierPlugin is used to modify all the links in the HTML, CSS, JS documents.
+ */
 class LinkModifierPlugin extends AbstractPlugin
 {
     public function onRequestComplete(ProxyEvent $event)
