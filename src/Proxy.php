@@ -4,6 +4,7 @@ namespace Dootech\WebProxy;
 use Dootech\WebProxy\Event\ProxyEvent;
 use Goutte\Client;
 use GuzzleHttp\Cookie\FileCookieJar;
+use GuzzleHttp\Cookie\SessionCookieJar;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
@@ -20,9 +21,15 @@ class Proxy
     private $appendUrl;
     private $targetUrl;
 
-    public function __construct()
+    private $cookieDir;
+
+    public function __construct($cookieDir = null)
     {
         $this->dispatcher = new EventDispatcher();
+
+        if ($cookieDir) {
+            $this->setCookieDir($cookieDir);
+        }
     }
 
     public function forward(Request $request, $targetUrl)
@@ -93,7 +100,11 @@ class Proxy
         if (!$this->client) {
             $targetDomain = parse_url($this->getTargetUrl(), PHP_URL_HOST);
             if ($targetDomain) {
-                $guzzleCookieJar = new FileCookieJar(dirname(__FILE__) . "/../cache/cookie_$targetDomain", TRUE);
+                if ($this->cookieDir) {
+                    $guzzleCookieJar = new FileCookieJar($this->cookieDir . DIRECTORY_SEPARATOR . "cookie_$targetDomain.json", TRUE);
+                } else {
+                    $guzzleCookieJar = new SessionCookieJar("cookie_$targetDomain", TRUE);
+                }
         }
 
             $this->client = new Client();
@@ -104,6 +115,16 @@ class Proxy
         }
 
         return $this->client;
+    }
+
+    public function setCookieDir($cookieDir)
+    {
+        if (!empty($cookieDir) && file_exists($cookieDir) && is_dir($cookieDir)) {
+            $this->cookieDir = rtrim($cookieDir, DIRECTORY_SEPARATOR);
+        } else {
+            throw new \Exception('Invalid cookie dir');
+        }
+
     }
 
     public function getRequest()
