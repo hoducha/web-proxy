@@ -14,6 +14,7 @@ if ($targetUrl) {
 
     $proxy = new Proxy();
     $proxy->setAppendUrl($appendUrl);
+    $proxy->setCookieDir(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'cache');
     $proxy->getDispatcher()->addSubscriber(new \Dootech\WebProxy\Plugin\LinkModifierPlugin());
     $proxy->getDispatcher()->addSubscriber(new \Dootech\WebProxy\Plugin\RedirectPlugin(array('image', 'video', 'audio')));
 
