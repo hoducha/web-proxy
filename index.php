@@ -10,13 +10,7 @@ $targetUrl = $request->get('_proxyTargetUrl');
 $targetUrl = urldecode($targetUrl);
 
 if ($targetUrl) {
-    // Get base url
-    if (strtolower(substr($_SERVER['HTTP_HOST'], 0, 4)) != 'http' && (!isset($_SERVER['HTTPS']) || $_SERVER['HTTPS'] == '')) {
-        $host = 'http://' . $_SERVER['HTTP_HOST'];
-    } else {
-        $host = 'https://' . $_SERVER['HTTP_HOST'];
-    }
-    $appendUrl = $host . $_SERVER['SCRIPT_NAME'] . '?_proxyTargetUrl=';
+    $appendUrl = $request->getSchemeAndHttpHost().$request->getBaseUrl().$request->getPathInfo() . '?_proxyTargetUrl=';
 
     $proxy = new Proxy();
     $proxy->setAppendUrl($appendUrl);
