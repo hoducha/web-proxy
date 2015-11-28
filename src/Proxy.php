@@ -3,6 +3,7 @@ namespace Dootech\WebProxy;
 
 use Dootech\WebProxy\Event\ProxyEvent;
 use Goutte\Client;
+use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Cookie\FileCookieJar;
 use GuzzleHttp\Cookie\SessionCookieJar;
 use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -101,17 +102,19 @@ class Proxy
             $targetDomain = parse_url($this->getTargetUrl(), PHP_URL_HOST);
             if ($targetDomain) {
                 if ($this->cookieDir) {
-                    $guzzleCookieJar = new FileCookieJar($this->cookieDir . DIRECTORY_SEPARATOR . "cookie_$targetDomain.json", TRUE);
+                    $guzzleCookieJar = new FileCookieJar($this->cookieDir . DIRECTORY_SEPARATOR . $targetDomain, TRUE);
                 } else {
-                    $guzzleCookieJar = new SessionCookieJar("cookie_$targetDomain", TRUE);
+                    $guzzleCookieJar = new SessionCookieJar($targetDomain, TRUE);
                 }
-        }
+            }
 
             $this->client = new Client();
             $this->client->setServerParameter('HTTP_USER_AGENT', $_SERVER['HTTP_USER_AGENT']);
             if (!empty($guzzleCookieJar)) {
                 $this->client->setGuzzleCookieJar($guzzleCookieJar);
             }
+
+            $this->client->setClient(new GuzzleClient(array('allow_redirects' => false, 'cookies' => true, 'verify' => false)));
         }
 
         return $this->client;
@@ -119,12 +122,13 @@ class Proxy
 
     public function setCookieDir($cookieDir)
     {
-        if (!empty($cookieDir) && file_exists($cookieDir) && is_dir($cookieDir)) {
-            $this->cookieDir = rtrim($cookieDir, DIRECTORY_SEPARATOR);
-        } else {
-            throw new \Exception('Invalid cookie dir');
+        $cookieDir = rtrim($cookieDir, DIRECTORY_SEPARATOR);
+        if (!file_exists($cookieDir)) {
+            if (!mkdir($cookieDir, 0777, true)) {
+                throw new \Exception('Failed to create cookies directory');
+            }
         }
-
+        $this->cookieDir = $cookieDir;
     }
 
     public function getRequest()
