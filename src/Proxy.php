@@ -2,6 +2,7 @@
 namespace Dootech\WebProxy;
 
 use Dootech\WebProxy\Event\ProxyEvent;
+use Dootech\WebProxy\Parser\Encoder;
 use Goutte\Client;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Cookie\FileCookieJar;
@@ -24,7 +25,9 @@ class Proxy
 
     private $cookieDir;
 
-    public function __construct($cookieDir = null)
+    private $encoder;
+
+    public function __construct($cookieDir = null, $encodeKey = null)
     {
         $this->dispatcher = new EventDispatcher();
 
@@ -37,6 +40,10 @@ class Proxy
     {
         $this->request = $request;
         $this->targetUrl = $targetUrl;
+
+        if ($this->encoder && !preg_match('~/~', $this->targetUrl)) {
+            $this->targetUrl = $this->encoder->decode($this->targetUrl);
+        }
 
         $this->dispatcher->dispatch('request.before_send', new ProxyEvent(array('proxy' => $this)));
 
@@ -193,5 +200,21 @@ class Proxy
     public function setRedirect($redirect)
     {
         $this->redirect = $redirect;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getEncoder()
+    {
+        return $this->encoder;
+    }
+
+    public function setEncoderKey($encoderKey)
+    {
+        if ($encoderKey) {
+            $this->encoder = new Encoder();
+            $this->encoder->serverKey = $encoderKey;
+        }
     }
 }

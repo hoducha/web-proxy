@@ -13,6 +13,11 @@ if ($targetUrl) {
     $appendUrl = $request->getSchemeAndHttpHost().$request->getBaseUrl().$request->getPathInfo() . '?_proxyTargetUrl=';
 
     $proxy = new Proxy();
+
+    // Encode Url
+    $encoderKey = 'joWVexlW4fHeH/2GGNLefy8bV7JFaaTTF92AWp1k0jDsMqC8tqeAvdLo/gg';
+    $proxy->setEncoderKey($encoderKey);
+
     $proxy->setAppendUrl($appendUrl);
     $proxy->setCookieDir(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'cache');
     $proxy->getDispatcher()->addSubscriber(new \Dootech\WebProxy\Plugin\LinkModifierPlugin());

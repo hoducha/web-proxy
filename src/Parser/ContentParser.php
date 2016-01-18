@@ -14,6 +14,7 @@ class ContentParser
     private $urlParser;
     private $urlPrefix;
     private $baseHref;
+    private $encoder;
 
     // TODO: Verify it works
     private $enableJavascriptParsing = false;
@@ -66,6 +67,11 @@ class ContentParser
         return $code;
     }
 
+    public function setEncoder($encoder)
+    {
+        $this->encoder = $encoder;
+    }
+
     protected function toAbsoluteUrl($urlField)
     {
         if ($urlField == '') {
@@ -85,7 +91,11 @@ class ContentParser
             $urlBase = $this->urlParser->getAbsolute($urlField);
         }
 
-        return $this->urlPrefix .urlencode($urlBase);
+        if ($this->encoder) {
+            $urlBase = $this->encoder->encode($urlBase);
+        }
+
+        return $this->urlPrefix . $urlBase;
     }
 
     /**

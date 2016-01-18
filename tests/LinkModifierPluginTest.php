@@ -37,16 +37,16 @@ HTML;
 <html lang="en">
 <body>
     <div id="action">
-        <a href='http://proxy.local?u=http%3A%2F%2Fexample.com%2Flink%2F' >Test</a>
-        <a href="http://proxy.local?u=http%3A%2F%2Fexample.com%2Flink%2F" >Test</a>
-        <a href="http://proxy.local?u=http%3A%2F%2Fwww.example.com%2Flink%2F" >Test</a>
-        <a href="http://proxy.local?u=http%3A%2F%2Fwww.example.com%2Flink.html" >Test</a>
-        <a href="http://proxy.local?u=http%3A%2F%2Fwww.example.com%2Flink.jpg" >Test</a>
-        <a href="http://proxy.local?u=http%3A%2F%2Fexample.com%2Flink" >Test</a>
-        <a href="http://proxy.local?u=http%3A%2F%2Fexample.com%2Flink.php" >Test</a>
-        <a id="linkId" class="linkClass" href="http://proxy.local?u=http%3A%2F%2Fexample.com%2Flink.php" /> Test </a>
-        <a href="http://proxy.local?u=http%3A%2F%2Fwww.example-external.com%2Flink.jpg" >Test</a>
-        <a href="http://proxy.local?u=http%3A%2F%2Fexample.com%2Flink%2F" >"Example quote 'Test' "</a>
+        <a href='http://proxy.local?u=http://example.com/link/' >Test</a>
+        <a href="http://proxy.local?u=http://example.com/link/" >Test</a>
+        <a href="http://proxy.local?u=http://www.example.com/link/" >Test</a>
+        <a href="http://proxy.local?u=http://www.example.com/link.html" >Test</a>
+        <a href="http://proxy.local?u=http://www.example.com/link.jpg" >Test</a>
+        <a href="http://proxy.local?u=http://example.com/link" >Test</a>
+        <a href="http://proxy.local?u=http://example.com/link.php" >Test</a>
+        <a id="linkId" class="linkClass" href="http://proxy.local?u=http://example.com/link.php" /> Test </a>
+        <a href="http://proxy.local?u=http://www.example-external.com/link.jpg" >Test</a>
+        <a href="http://proxy.local?u=http://example.com/link/" >"Example quote 'Test' "</a>
     </div>
 </body>
 </html>
@@ -81,14 +81,14 @@ HTML;
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet" href="http://proxy.local?u=http%3A%2F%2Fexample.com%2Fstyle.css" />
+    <link rel="stylesheet" href="http://proxy.local?u=http://example.com/style.css" />
     <style>
         .test {
-            background: #00ff00 url("http://proxy.local?u=http%3A%2F%2Fexample.com%2Fsmiley.gif") no-repeat fixed center;
+            background: #00ff00 url("http://proxy.local?u=http://example.com/smiley.gif") no-repeat fixed center;
         }
         @font-face {
             font-family: myFirstFont;
-            src: url(http://proxy.local?u=http%3A%2F%2Fexample.com%2Fsansation_light.woff);
+            src: url(http://proxy.local?u=http://example.com/sansation_light.woff);
         }
     </style>
 </head>
@@ -114,11 +114,11 @@ CSS;
 
         $expectedResult = <<<CSS
 .test {
-    background: #00ff00 url("http://proxy.local?u=http%3A%2F%2Fexample.com%2Fsmiley.gif") no-repeat fixed center;
+    background: #00ff00 url("http://proxy.local?u=http://example.com/smiley.gif") no-repeat fixed center;
 }
 @font-face {
     font-family: myFirstFont;
-    src: url(http://proxy.local?u=http%3A%2F%2Fexample.com%2Fsansation_light.woff);
+    src: url(http://proxy.local?u=http://example.com/sansation_light.woff);
 }
 CSS;
 
