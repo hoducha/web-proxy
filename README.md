@@ -1,25 +1,28 @@
-WebProxy Library
-========================
+## WebProxy Library
 
 WebProxy is an advanced web proxy built with Symfony components, Goutte and Guzzle.
 
-What's inside?
---------------
+## Usage
+```php
+$proxy = new Proxy();
+$proxy->getDispatcher()->addSubscriber(new LinkModifierPlugin());
+$proxy->getDispatcher()->addSubscriber(new CookiePlugin());
+
+$response = $proxy->forward($request, $targetUrl);
+```
+
+## What's inside?
 
 WebProxy is configured with the following defaults:
 
-  * **CookiePlugin**
+  * **CookiePlugin** - Used to modify and persist cookies to browsers
 
-  * **LinkModifier**
+  * **LinkModifier** - Used to modify all the links in the HTML, CSS, JS documents.
 
-  * [**BrowserKit**][1] - BrowserKit simulates the behavior of a web browser.
+  * **BrowserKit** - BrowserKit simulates the behavior of a web browser.
 
-  * [**DomCrawler**][2] - DomCrawler eases DOM navigation for HTML and XML documents.
+  * **DomCrawler** - DomCrawler eases DOM navigation for HTML and XML documents.
 
-All libraries and bundles included in the WebProxy are
-released under the MIT or BSD license.
+All libraries and bundles included in the WebProxy are released under the MIT license.
 
 Enjoy!
-
-[1]:  https://github.com/symfony/BrowserKit
-[2]:  https://github.com/symfony/DomCrawler
